@@ -1,182 +1,173 @@
-# Foundry Fund Me
+# 💸 FundMe - Crowdfunding Smart Contract with Real-Time ETH/USD Conversion
 
-A crowd sourcing smart contract protocol 
+## 🧾 Overview
 
+**FundMe** is a decentralized crowdfunding smart contract written in Solidity. It uses **Chainlink's ETH/USD price feed** to ensure that each contribution meets a **minimum USD value**, regardless of ETH price fluctuations. This allows the campaign to maintain consistent contribution thresholds over time.
 
-# Getting Started
+---
 
+## 🧩 Cloning & Installing with Foundry
 
-## Foundry
+### ✅ Step Install Foundry (if not already installed)
 
-**Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
-
-Foundry consists of:
-
--   **Forge**: Ethereum testing framework (like Truffle, Hardhat and DappTools).
--   **Cast**: Swiss army knife for interacting with EVM smart contracts, sending transactions and getting chain data.
--   **Anvil**: Local Ethereum node, akin to Ganache, Hardhat Network.
--   **Chisel**: Fast, utilitarian, and verbose solidity REPL.
-
-## Requirements
-
-- [git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
-  - You'll know you did it right if you can run `git --version` and you see a response like `git version x.x.x`
-- [foundry](https://getfoundry.sh/)
-  - You'll know you did it right if you can run `forge --version` and you see a response like `forge 1.0.0 (816e00b 2023-03-16T00:05:26.396218Z)`
-
-
-## Quickstart
-
+```bash
+curl -L https://foundry.paradigm.xyz | bash
+foundryup
 ```
+
+---
+
+### ✅ Clone the Project
+
+```bash
 git clone https://github.com/Conrad-sudo/foundry-fundme
-cd fund-me
-make
+cd foundry-fundme
 ```
 
+---
 
-# Usage
+### ✅ Install Dependencies
 
-## Deploy
+Refer to the `Makefile` for dependencies
 
-```
-forge script script/DeployFundMe.s.sol
-```
-
-## Testing
-
-We talk about 4 test tiers in the video. 
-
-1. Unit
-2. Integration
-3. Forked
-4. Staging
-
-This repo we cover #1 and #3. 
-
-
-```
-forge test
-```
-
-or 
-
-```
-// Only run test functions matching the specified regex pattern.
-
-"forge test -m testFunctionName" is deprecated. Please use 
-
-forge test --match-test testFunctionName
-```
-
-or
-
-```
-forge test --fork-url $SEPOLIA_RPC_URL
-```
-
-### Test Coverage
-
-```
-forge coverage
-```
-
-## Local zkSync 
-
-The instructions here will allow you to work with this repo on zkSync.
-
-### (Additional) Requirements 
-
-In addition to the requirements above, you'll need:
-- [foundry-zksync](https://github.com/matter-labs/foundry-zksync)
-  - You'll know you did it right if you can run `forge --version` and you see a response like `forge 1.0.0 (816e00b 2023-03-16T00:05:26.396218Z)`. 
-- [npx & npm](https://docs.npmjs.com/cli/v10/commands/npm-install)
-  - You'll know you did it right if you can run `npm --version` and you see a response like `7.24.0` and `npx --version` and you see a response like `8.1.0`.
-
-```
-
-### Setup local zkSync node 
-
-Run the following:
+Run:
 
 ```bash
-npx zksync-cli dev config
+make install
 ```
 
-And select: `In memory node` and do not select any additional modules.
+If this project uses Chainlink and other external dependencies via Git submodules or GitHub packages, they'll be fetched now.
 
-Then run:
-```bash
-npx zksync-cli dev start
+> ⚠️ If the `lib` directory or `foundry.toml` is missing, run `forge init` before this step, or check that it's included in the repo.
+
+---
+
+## 🚀 Features
+
+- ✅ **Minimum USD Threshold**: Each contribution must meet a specified USD amount, converted from ETH in real time.
+- 🔗 **Chainlink Integration**: Uses `AggregatorV3Interface` to fetch ETH/USD price data securely and reliably.
+- 👥 **Funder Tracking**: Stores each funder’s contribution and maintains a list of funders.
+- 🔐 **Owner-Only Withdrawals**: Only the contract owner can withdraw funds once the campaign ends.
+- 🔁 **Reactivatable**: The contract can be reactivated to restart fundraising rounds.
+- 💰 **Automatic Acceptance**: Accepts ETH directly via `receive()` and `fallback()` functions.
+
+---
+
+## 🧠 How It Works
+
+### Deployment
+
+```solidity
+constructor(uint256 minimumUSD, address _priceFeed)
 ```
 
-And you'll get an output like:
-```
-In memory node started v0.1.0-alpha.22:
- - zkSync Node (L2):
-  - Chain ID: 260
-  - RPC URL: http://127.0.0.1:8011
-  - Rich accounts: https://era.zksync.io/docs/tools/testing/era-test-node.html#use-pre-configured-rich-wallets
-```
+| Parameter    | Description                                                    |
+| ------------ | -------------------------------------------------------------- |
+| `minimumUSD` | Minimum USD amount required to fund (converted to 18 decimals) |
+| `_priceFeed` | Chainlink ETH/USD price feed address for your network          |
 
-### Deploy to local zkSync node
+📍 Example (Sepolia testnet):
 
-```bash
-make deploy-zk
+```solidity
+new FundMe(50, 0x694AA1769357215DE4FAC081bf1f309aDC325306);
 ```
 
-This will deploy a mock price feed and a fund me contract to the zkSync node.
+> This sets the minimum contribution to \$50 (in ETH equivalent at current market rate).
 
-# Deployment to a testnet or mainnet
+---
 
-1. Setup environment variables
+### Funding the Contract
 
-You'll want to set your `SEPOLIA_RPC_URL` and `PRIVATE_KEY` as environment variables. You can add them to a `.env` file, similar to what you see in `.env.example`.
-
-- `PRIVATE_KEY`: The private key of your account (like from [metamask](https://metamask.io/)). **NOTE:** FOR DEVELOPMENT, PLEASE USE A KEY THAT DOESN'T HAVE ANY REAL FUNDS ASSOCIATED WITH IT.
-  - You can [learn how to export it here](https://metamask.zendesk.com/hc/en-us/articles/360015289632-How-to-Export-an-Account-Private-Key).
-- `SEPOLIA_RPC_URL`: This is url of the sepolia testnet node you're working with. Setup with one for free from [Alchemy](https://alchemy.com/?a=673c802981)
-
- `ETHERSCAN_API_KEY` to verify your contract on [Etherscan](https://etherscan.io/).
-
-2. Get testnet ETH
-
-Head over to [faucets.chain.link](https://faucets.chain.link/) and get some testnet ETH.
-
-3. Deploy
-
-```
-forge script script/DeployFundMe.s.sol --rpc-url $SEPOLIA_RPC_URL --private-key $PRIVATE_KEY --broadcast --verify --etherscan-api-key $ETHERSCAN_API_KEY
+```solidity
+function fund() public payable
 ```
 
-## Scripts
+- Users call `fund()` or send ETH directly to the contract.
+- Contribution is only accepted if `msg.value` converted to USD ≥ `MINIMUM_USD`.
+- Contributions are tracked in `s_addressToFunds` and `s_funders`.
 
-After deploying to a testnet or local net, you can run the scripts. 
+---
 
-Using cast deployed locally example: 
+### Withdrawing Funds
 
-```
-cast send <FUNDME_CONTRACT_ADDRESS> "fund()" --value 0.1ether --private-key <PRIVATE_KEY>
-```
-
-or
-```
-forge script script/Interactions.s.sol:FundFundMe --rpc-url sepolia  --private-key $PRIVATE_KEY  --broadcast
-forge script script/Interactions.s.sol:WithdrawFundMe --rpc-url sepolia  --private-key $PRIVATE_KEY  --broadcast
+```solidity
+function withdraw() public isOwner returns (bool)
 ```
 
-### Withdraw
+- Only the owner can call this function.
+- Transfers the full contract balance to the owner.
+- Clears all funder records and sets funding status to `inactive`.
 
+---
+
+### Reactivating the Contract
+
+```solidity
+function reactivateFunding() public isOwner
 ```
-cast send <FUNDME_CONTRACT_ADDRESS> "withdraw()"  --private-key <PRIVATE_KEY>
+
+- Allows the owner to restart the campaign.
+- Sets status from `inactive` to `active`.
+
+---
+
+## 📊 Chainlink Price Feed
+
+- **Aggregator**: ETH/USD
+- **Network**: Sepolia Testnet
+- **Address**: `0x694AA1769357215DE4FAC081bf1f309aDC325306`
+
+> You can replace the price feed address with one appropriate to your network. [See full list of Chainlink price feeds](https://docs.chain.link/data-feeds/price-feeds/addresses).
+
+---
+
+## 🔍 Read Functions
+
+| Function                     | Returns                                         |
+| ---------------------------- | ----------------------------------------------- |
+| `getFunder(uint256 index)`   | Address of a funder by index                    |
+| `getAddressToFunds(address)` | Total amount contributed by a funder            |
+| `getFunderArrayLength()`     | Total number of funders                         |
+| `getOwner()`                 | Address of the contract owner                   |
+| `getStatus()`                | Current funding status (`active` or `inactive`) |
+
+---
+
+## 🧱 State Variables
+
+- `owner`: Immutable owner set at deployment.
+- `MINIMUM_USD`: Minimum USD contribution required (with 18 decimals).
+- `s_funders`: List of all funder addresses.
+- `s_addressToFunds`: Mapping of funders to their contributions.
+- `status`: Enum indicating current fundraising state.
+- `priceFeed`: Chainlink ETH/USD feed.
+
+---
+
+## 🧰 Dependencies
+
+- `PriceConverter.sol` (local library)
+- `AggregatorV3Interface` from Chainlink
+
+Your `PriceConverter` library should implement a function like:
+
+```solidity
+function convertEthAmountToUSD(uint256 ethAmount, AggregatorV3Interface priceFeed) internal view returns (uint256)
 ```
 
+---
 
+## ⚠️ Security Considerations
 
+- ✅ Follows the [CEI pattern](https://fravoll.github.io/solidity-patterns/checks_effects_interactions.html) in withdrawal.
+- ✅ Validates `msg.sender` in `isOwner` modifier.
+- ⚠️ No reentrancy guard — recommended if you plan to extend.
+- ⚠️ Make sure the `PriceConverter` cannot be manipulated (e.g. avoid using unreliable price feeds).
 
-### Help
+---
 
-```shell
-$ forge --help
-$ anvil --help
-$ cast --help
-```
+## 📄 License
+
+MIT © 2025
+
+---
